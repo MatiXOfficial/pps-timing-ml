@@ -3,33 +3,34 @@ from scipy import signal
 from scipy.ndimage import filters
 
 
-class NormalizedThreshold:
+class CFD:
     """
-    Normalized threshold algorithm
+    Constant fraction discriminator implemented using the normalized threshold algorithm
     """
 
     def __init__(self, n_baseline: int = 20, threshold: float = 0.3, smooth: bool = False, kernel_width: float = 10,
-                 kernel_sigma: float = 5):
+                 kernel_sigma: float = 5, log: bool = False):
         """
         :param n_baseline: number of first samples taken into account when calculating the baseline
         :param threshold: threshold to cross by the signal
         :param smooth: If True: apply a gaussian kernel to smooth the series
         :param kernel_width: Kernel width for gaussian smoothing
         :param kernel_sigma: Kernel sigma for gaussian smoothing
+        :param log: if True, log messages are printed
         """
         self.n_baseline = n_baseline
         self.threshold = threshold
         self.smooth = smooth
         self.kernel_width = kernel_width
         self.kernel_sigma = kernel_sigma
+        self.log = log
 
-    def predict(self, X: np.ndarray, Y: np.ndarray, baseline_threshold: float = None, log: bool = False):
+    def predict(self, X: np.ndarray, Y: np.ndarray, baseline_threshold: float = None):
         """
         Find the timestamp
         :param X: x axis data (time)
         :param Y: y axis data (ampl)
         :param baseline_threshold: max - min threshold. if None: np.std(Y[:self.n_baseline]) * 6
-        :param log: if True, log messages are printed
         :return: timestamp
         """
         if X is None:
@@ -41,7 +42,7 @@ class NormalizedThreshold:
 
         # if max - min < baseline_threshold there is no peak for sure
         if np.max(samples) - np.min(samples) < baseline_threshold:
-            if log:
+            if self.log:
                 print('max - min < threshold')
             return None
 
@@ -53,7 +54,7 @@ class NormalizedThreshold:
         # work only with positive and normalized signals
         samples -= np.mean(samples[:self.n_baseline])
         if abs(np.max(samples)) < abs(np.min(samples)):
-            samples /= -np.min(samples)
+            samples /= np.min(samples)
         else:
             samples /= np.max(samples)
 
@@ -62,6 +63,8 @@ class NormalizedThreshold:
         while i < len(samples) and samples[i] <= self.threshold:
             i += 1
         if i == len(samples):
+            if self.log:
+                print('Signal is not crossing the threshold')
             return None
 
         # Apply fit between the two points closest to the crossing and return the timestamp

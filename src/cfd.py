@@ -9,7 +9,7 @@ class CFD:
     """
 
     def __init__(self, n_baseline: int = 20, threshold: float = 0.3, smooth: bool = False, kernel_width: float = 10,
-                 kernel_sigma: float = 5, log: bool = False):
+                 kernel_sigma: float = 5, log: bool = False) -> None:
         """
         :param n_baseline: number of first samples taken into account when calculating the baseline
         :param threshold: threshold to cross by the signal
@@ -25,7 +25,7 @@ class CFD:
         self.kernel_sigma = kernel_sigma
         self.log = log
 
-    def predict(self, X: np.ndarray, Y: np.ndarray, baseline_threshold: float = None):
+    def predict(self, X: np.ndarray, Y: np.ndarray, baseline_threshold: float = None) -> None | float:
         """
         Find the timestamp
         :param X: x axis data (time)

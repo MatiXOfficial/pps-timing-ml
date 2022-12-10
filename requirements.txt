@@ -2,4 +2,4 @@ joblib==1.2.0
 matplotlib==3.6.2
 numpy==1.23.5
 scipy==1.9.3
-uproot==4.3.7
+uproot==5.0.0

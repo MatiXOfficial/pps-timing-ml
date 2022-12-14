@@ -1,5 +1,3 @@
-from typing import Self
-
 import numpy as np
 from uproot import ReadOnlyDirectory
 
@@ -11,7 +9,7 @@ class WaveformData:
         self.t_cfd: None | float = None
 
     @classmethod
-    def from_channel_data(cls, channel_data: ReadOnlyDirectory) -> Self:
+    def from_channel_data(cls, channel_data: ReadOnlyDirectory):
         series = np.array(channel_data['wavCal'].values())
         series[1] = -series[1] + 1  # revert
         t0 = channel_data['t0'].members['fVal']
@@ -30,7 +28,7 @@ class EventData:
         self.t_cfd_average = None
 
     @classmethod
-    def from_event_data(cls, event_data: ReadOnlyDirectory) -> Self:
+    def from_event_data(cls, event_data: ReadOnlyDirectory):
         planes = {}
         for plane_key, plane_data in event_data.items(recursive=False):
             plane_name = int(plane_key[6:-2])

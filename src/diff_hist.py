@@ -21,7 +21,7 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     std_stat = weighted_stats.std
 
     # fitted gaussian statistics
-    popt, _ = curve_fit(_gauss, x, y, p0=[1, mean_stat, std_stat])
+    popt, _ = curve_fit(_gauss, x, y, p0=[1, mean_stat, std_stat]) # second parameter: Cov 
     gauss_mean = popt[1]
     gauss_std = abs(popt[2])
 
@@ -41,7 +41,8 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
 
     if plot_gauss:
         gauss_y = norm.pdf(bins_x, mean, std)
-        gauss_y *= np.max(bins_y) / np.max(gauss_y)
+        # TODO: gauss_y *= popt[0]
+        gauss_y *= np.max(bins_y) / np.max(gauss_y) # use other normalisation (popt[0])
         plt.plot(bins_x, gauss_y, 'r--', linewidth=2)
 
     if show:

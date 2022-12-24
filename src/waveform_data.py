@@ -7,6 +7,7 @@ class WaveformData:
         self.series = series
         self.t0 = t0
         self.t_cfd: None | float = None
+        self.true_t_cfd: None | float = None
 
     @classmethod
     def from_channel_data(cls, channel_data: ReadOnlyDirectory):

@@ -13,7 +13,7 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     """
     :param x: time
     :param y: voltage
-    :return: mean, std
+    :return: gauss_a, mean, std, mean_stat, std_stat
     """
     # regular statistics
     weighted_stats = DescrStatsW(x, weights=y, ddof=0)
@@ -25,7 +25,7 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     gauss_mean = popt[1]
     gauss_std = abs(popt[2])
 
-    return gauss_mean, gauss_std, mean_stat, std_stat
+    return popt[0], gauss_mean, gauss_std, mean_stat, std_stat
 
 
 def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_range: tuple[float, float],
@@ -37,12 +37,12 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
     x_step = (bins_x[1] - bins_x[0]) / 2
     bins_x += x_step
 
-    mean, std, mean_stat, std_stat = get_gauss_stats(bins_x, bins_y)
+    a, mean, std, mean_stat, std_stat = get_gauss_stats(bins_x, bins_y)
 
     if plot_gauss:
         gauss_y = norm.pdf(bins_x, mean, std)
-        # TODO: gauss_y *= popt[0]
-        gauss_y *= np.max(bins_y) / np.max(gauss_y) # use other normalisation (popt[0])
+        gauss_y *= a / np.max(gauss_y)
+        # gauss_y *= np.max(bins_y) / np.max(gauss_y) # use other normalisation (popt[0])
         plt.plot(bins_x, gauss_y, 'r--', linewidth=2)
 
     if show:

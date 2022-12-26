@@ -25,7 +25,7 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     gauss_mean = popt[1]
     gauss_std = abs(popt[2])
 
-    return gauss_mean, gauss_std
+    return gauss_mean, gauss_std, mean_stat, std_stat
 
 
 def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_range: tuple[float, float],
@@ -37,7 +37,7 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
     x_step = (bins_x[1] - bins_x[0]) / 2
     bins_x += x_step
 
-    mean, std = get_gauss_stats(bins_x, bins_y)
+    mean, std, mean_stat, std_stat = get_gauss_stats(bins_x, bins_y)
 
     if plot_gauss:
         gauss_y = norm.pdf(bins_x, mean, std)
@@ -48,7 +48,7 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
     if show:
         plt.show()
 
-    return mean, std
+    return mean, std, mean_stat, std_stat
 
 
 def plot_diff_hist_stats(y_true: np.ndarray, y_pred: np.ndarray, show: bool = True, n_bins: int = 100,
@@ -65,7 +65,7 @@ def plot_diff_hist_stats(y_true: np.ndarray, y_pred: np.ndarray, show: bool = Tr
     :param hist_label: Label of the histogram
     :param plot_gauss: If True: a fitted Gaussian is plotted with the histogram
     :param xlabel: plot x label
-    :return: tuple: (mean, std) of the histogram
+    :return: tuple: (mean, std, mean_stat, std_stat) of the histogram
     """
 
     # histogram

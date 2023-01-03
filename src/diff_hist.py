@@ -9,10 +9,14 @@ def _gauss(x: np.ndarray, a: float, mu: float, sigma: float) -> float:
     return a * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
 
 
-def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
+def get_gauss_stats(x: np.ndarray, y: np.ndarray, a_0: float = None, mean_0: float = None, std_0: float = None) -> \
+        tuple[float, float, float, float]:
     """
-    :param x: time
-    :param y: voltage
+    :param x: e.g. time
+    :param y: e.g. voltage
+    :param a_0: base a value for the curve fit
+    :param mean_0: base mean value for the curve fit
+    :param std_0: base std value for the curve fit
     :return: gauss_a, mean, std, mean_stat, std_stat
     """
     # regular statistics
@@ -20,12 +24,20 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     mean_stat = weighted_stats.mean
     std_stat = weighted_stats.std
 
+    if a_0 is None:
+        a_0 = np.max(y)
+    if mean_0 is None:
+        mean_0 = mean_stat
+    if std_0 is None:
+        std_0 = std_stat
+
     # fitted gaussian statistics
-    popt, _ = curve_fit(_gauss, x, y, p0=[1, mean_stat, std_stat]) # second parameter: Cov 
+    popt, _ = curve_fit(_gauss, x, y, p0=[a_0, mean_0, std_0])  # second parameter: Cov
+    a = popt[0]
     gauss_mean = popt[1]
     gauss_std = abs(popt[2])
 
-    return popt[0], gauss_mean, gauss_std, mean_stat, std_stat
+    return a, gauss_mean, gauss_std, mean_stat, std_stat
 
 
 def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_range: tuple[float, float],

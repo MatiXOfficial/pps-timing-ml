@@ -10,14 +10,14 @@ def _gauss(x: np.ndarray, a: float, mu: float, sigma: float) -> float:
 
 
 def get_gauss_stats(x: np.ndarray, y: np.ndarray, a_0: float = None, mean_0: float = None, std_0: float = None) -> \
-        tuple[float, float, float, float]:
+        tuple[float, float, float, float, float, float]:
     """
     :param x: e.g. time
     :param y: e.g. voltage
     :param a_0: base a value for the curve fit
     :param mean_0: base mean value for the curve fit
     :param std_0: base std value for the curve fit
-    :return: gauss_a, mean, std, mean_stat, std_stat
+    :return: gauss_a, mean, std, mean_stat, std_stat, pcov
     """
     # regular statistics
     weighted_stats = DescrStatsW(x, weights=y, ddof=0)
@@ -32,16 +32,16 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray, a_0: float = None, mean_0: flo
         std_0 = std_stat
 
     # fitted gaussian statistics
-    popt, _ = curve_fit(_gauss, x, y, p0=[a_0, mean_0, std_0])  # second parameter: Cov
+    popt, pcov = curve_fit(_gauss, x, y, p0=[a_0, mean_0, std_0])
     a = popt[0]
     gauss_mean = popt[1]
     gauss_std = abs(popt[2])
 
-    return a, gauss_mean, gauss_std, mean_stat, std_stat
+    return a, gauss_mean, gauss_std, mean_stat, std_stat, pcov
 
 
 def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_range: tuple[float, float],
-                     hist_alpha: float, hist_label: str, plot_gauss: bool) -> tuple[float, float]:
+                     hist_alpha: float, hist_label: str, plot_gauss: bool) -> tuple[float, float, float, float, float]:
     hist_data = plt.hist(timestamps_diff, bins=n_bins, range=hist_range, alpha=hist_alpha, label=hist_label)
 
     # retrieve bins
@@ -49,23 +49,23 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
     x_step = (bins_x[1] - bins_x[0]) / 2
     bins_x += x_step
 
-    a, mean, std, mean_stat, std_stat = get_gauss_stats(bins_x, bins_y)
+    a, mean, std, mean_stat, std_stat, pcov = get_gauss_stats(bins_x, bins_y)
 
     if plot_gauss:
         gauss_y = norm.pdf(bins_x, mean, std)
         gauss_y *= a / np.max(gauss_y)
-        # gauss_y *= np.max(bins_y) / np.max(gauss_y) # use other normalisation (popt[0])
         plt.plot(bins_x, gauss_y, 'r--', linewidth=2)
 
     if show:
         plt.show()
 
-    return mean, std, mean_stat, std_stat
+    return mean, std, mean_stat, std_stat, pcov
 
 
 def plot_diff_hist_stats(y_true: np.ndarray, y_pred: np.ndarray, show: bool = True, n_bins: int = 100,
                          hist_range: tuple[float, float] = (-0.5, 0.5), hist_alpha: float = 1., hist_label: str = None,
-                         plot_gauss: bool = True, xlabel: str = 'time [ns]'):
+                         plot_gauss: bool = True, xlabel: str = 'time [ns]') -> \
+        tuple[float, float, float, float, float]:
     """
     Find the mean and std of a histogram of differences between y_true and y_pred timestamps
     :param y_true: Ground-truth timestamps
@@ -77,7 +77,7 @@ def plot_diff_hist_stats(y_true: np.ndarray, y_pred: np.ndarray, show: bool = Tr
     :param hist_label: Label of the histogram
     :param plot_gauss: If True: a fitted Gaussian is plotted with the histogram
     :param xlabel: plot x label
-    :return: tuple: (mean, std, mean_stat, std_stat) of the histogram
+    :return: tuple: (mean, std, mean_stat, std_stat, pcov)
     """
 
     # histogram

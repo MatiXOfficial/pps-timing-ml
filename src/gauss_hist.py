@@ -40,9 +40,22 @@ def get_gauss_stats(x: np.ndarray, y: np.ndarray, a_0: float = None, mean_0: flo
     return a, gauss_mean, gauss_std, mean_stat, std_stat, pcov
 
 
-def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_range: tuple[float, float],
-                     hist_alpha: float, hist_label: str, plot_gauss: bool) -> tuple[float, float, float, float, float]:
-    hist_data = plt.hist(timestamps_diff, bins=n_bins, range=hist_range, alpha=hist_alpha, label=hist_label)
+def plot_gauss_hist(x: np.ndarray, show: bool = True, n_bins: int = 100, hist_range: tuple[float, float] = (-0.5, 0.5),
+                    hist_alpha: float = 1., hist_label: str = None, plot_gauss: bool = True,
+                    xlabel: str = 'time [ns]') -> tuple[float, float, float, float, float]:
+    """
+    Find the mean and std of a histogram based on x. Optionally plot a Gaussian fitted to the histogram.
+    :param x: histogram data
+    :param show: If True: the histogram is shown (plt.show())
+    :param n_bins:
+    :param hist_range:
+    :param hist_alpha:
+    :param hist_label:
+    :param plot_gauss: If True: the fitted Gaussian is plotted with the histogram
+    :param xlabel:
+    :return: tuple of 5 numbers: Gaussian mean, Gaussian std, stat mean, stat std, covariance matrix of the Gaussian fit
+    """
+    hist_data = plt.hist(x, bins=n_bins, range=hist_range, alpha=hist_alpha, label=hist_label)
 
     # retrieve bins
     bins_x, bins_y = hist_data[1][:-1], hist_data[0]
@@ -56,6 +69,7 @@ def _diff_hist_stats(timestamps_diff: np.ndarray, show: bool, n_bins: int, hist_
         gauss_y *= a / np.max(gauss_y)
         plt.plot(bins_x, gauss_y, 'r--', linewidth=2)
 
+    plt.xlabel(xlabel)
     if show:
         plt.show()
 
@@ -67,21 +81,18 @@ def plot_diff_hist_stats(y_true: np.ndarray, y_pred: np.ndarray, show: bool = Tr
                          plot_gauss: bool = True, xlabel: str = 'time [ns]') -> \
         tuple[float, float, float, float, float]:
     """
-    Find the mean and std of a histogram of differences between y_true and y_pred timestamps
+    Find the mean and std of a histogram of differences between y_true and y_pred timestamps. Optionally plot a
+    Gaussian fitted to the histogram.
     :param y_true: Ground-truth timestamps
     :param y_pred: Predicted timestamps
     :param show: If True: the histogram is shown (plt.show())
-    :param n_bins: Number of the histogram bins
-    :param hist_range: Range of the histogram
-    :param hist_alpha: Alpha of the plotted histogram
-    :param hist_label: Label of the histogram
+    :param n_bins:
+    :param hist_range:
+    :param hist_alpha:
+    :param hist_label:
     :param plot_gauss: If True: a fitted Gaussian is plotted with the histogram
     :param xlabel: plot x label
-    :return: tuple: (mean, std, mean_stat, std_stat, pcov)
+    :return: tuple of 5 numbers: Gaussian mean, Gaussian std, stat mean, stat std, covariance matrix of the Gaussian fit
     """
-
-    # histogram
     timestamps_diff = y_pred - y_true
-
-    plt.xlabel(xlabel)
-    return _diff_hist_stats(timestamps_diff, show, n_bins, hist_range, hist_alpha, hist_label, plot_gauss)
+    return plot_gauss_hist(timestamps_diff, show, n_bins, hist_range, hist_alpha, hist_label, plot_gauss, xlabel)

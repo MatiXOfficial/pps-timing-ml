@@ -29,16 +29,16 @@ class CFD:
         self.kernel_sigma = kernel_sigma
         self.log = log
 
-    def predict(self, X: np.ndarray, Y: np.ndarray, baseline_threshold: float = None) -> None | float:
+    def predict_single(self, x: np.ndarray, Y: np.ndarray, baseline_threshold: float = None) -> None | float:
         """
-        Find the timestamp
-        :param X: x axis data (time)
+        Find the timestamp of a single time series
+        :param x: x axis data (time)
         :param Y: y axis data (ampl)
         :param baseline_threshold: max - min threshold. if None: np.std(Y[:self.n_baseline]) * 6
         :return: timestamp
         """
-        if X is None:
-            X = np.arange(len(Y))
+        if x is None:
+            x = np.arange(len(Y))
         if baseline_threshold is None:
             baseline_threshold = np.std(Y[:self.n_baseline]) * 6
 
@@ -72,23 +72,34 @@ class CFD:
             return None
 
         # Apply fit between the two points closest to the crossing and return the timestamp
-        x1 = X[i]
-        x2 = X[i - 1]
+        x1 = x[i]
+        x2 = x[i - 1]
         v1 = samples[i]
         v2 = samples[i - 1]
         return x1 + (x2 - x1) * (self.threshold - v1) / (v2 - v1)
+
+    def predict(self, x: np.ndarray, Y: np.ndarray, baseline_threshold: float = None) -> np.ndarray:
+        """
+        Find the timestamps of many time series
+        :param x: 1D x axis data (time), dim: time series length
+        :param Y: 2D y axis data (ampl), dim: number of events x time series length
+        :param baseline_threshold: max - min threshold. if None: np.std(Y[:self.n_baseline]) * 6
+        :return: timestamps, dim: number of events
+        """
+        t_pred = []
+        for y in Y:
+            t_pred.append(self.predict_single(x, y, baseline_threshold))
+
+        t_pred = np.array(t_pred)
+        return t_pred
 
 
 def find_optimal_cfd_threshold(thresholds, n_baseline, X, y_true, x_time, n_jobs=8, plot=True, log=True) -> float:
     def compute_cfd_resolution(threshold):
         print(f'Processing threshold={threshold:0.2f}...')
         cfd = CFD(n_baseline=n_baseline, threshold=threshold)
+        y_pred = cfd.predict(x_time, X)
 
-        y_pred = []
-        for x in X:
-            y_pred.append(cfd.predict(x_time, x))
-
-        y_pred = np.array(y_pred)
         std_cfd, _, _ = plot_difference_hist(y_true, y_pred, show=False)
         std_stat_cfd = np.std(y_pred - y_true)
         max_diff = max(abs(y_pred - y_true))

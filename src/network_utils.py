@@ -36,7 +36,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
     model.compile(loss='mse', optimizer=optimizers.Adam(lr), loss_weights=loss_weights)
 
     model_callbacks = [
-        callbacks.ModelCheckpoint(filepath=f'model_weights/{path_component}/{name}/weights', save_best_only=True,
+        callbacks.ModelCheckpoint(filepath=f'{root}/model_weights/{path_component}/{name}/weights', save_best_only=True,
                                   save_weights_only=True)
     ]
     if es_patience is not None:
@@ -47,7 +47,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
     if train:
         history = model.fit(X_train, y_train, epochs=n_epochs, verbose=verbose, batch_size=batch_size,
                             validation_data=(X_val, y_val), callbacks=model_callbacks).history
-        pd.DataFrame(history).to_csv(f'model_weights/{path_component}/{name}/loss_log.csv')
+        pd.DataFrame(history).to_csv(f'{root}/model_weights/{path_component}/{name}/loss_log.csv')
 
     model.load_weights(f'{root}/model_weights/{path_component}/{name}/weights')
     history = pd.read_csv(f'{root}/model_weights/{path_component}/{name}/loss_log.csv')
@@ -84,8 +84,12 @@ def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-
 
     if plane is not None and channel is not None:
         plt.title(f'Diff histogram (p: {plane}, ch: {channel}), mean={mu:0.4f}, std={std:0.4f}')
+
     if show:
         plt.show()
+    else:
+        plt.close()
+
     if print_pcov:
         print('Covariance matrix of the Gaussian fit:')
         print(pcov)

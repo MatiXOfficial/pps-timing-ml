@@ -1,6 +1,10 @@
 import numpy as np
+from joblib import Parallel, delayed
+from matplotlib import pyplot as plt
 from scipy import signal
 from scipy.ndimage import filters
+
+from src.network_utils import plot_difference_hist
 
 
 class CFD:
@@ -73,3 +77,63 @@ class CFD:
         v1 = samples[i]
         v2 = samples[i - 1]
         return x1 + (x2 - x1) * (self.threshold - v1) / (v2 - v1)
+
+
+def find_optimal_cfd_threshold(thresholds, n_baseline, X, y_true, x_time, n_jobs=8, plot=True, log=True) -> float:
+    def compute_cfd_resolution(threshold):
+        print(f'Processing threshold={threshold:0.2f}...')
+        cfd = CFD(n_baseline=n_baseline, threshold=threshold)
+
+        y_pred = []
+        for x in X:
+            y_pred.append(cfd.predict(x_time, x))
+
+        y_pred = np.array(y_pred)
+        std_cfd, _, _ = plot_difference_hist(y_true, y_pred, show=False)
+        std_stat_cfd = np.std(y_pred - y_true)
+        max_diff = max(abs(y_pred - y_true))
+
+        return threshold, std_cfd, std_stat_cfd, max_diff
+
+    cfd_all_stds = Parallel(n_jobs=n_jobs)(
+        delayed(compute_cfd_resolution)(threshold) for threshold in thresholds)
+
+    cfd_stds = {key: v for key, v, _, _ in cfd_all_stds}
+    cfd_stat_stds = {key: v for key, _, v, _ in cfd_all_stds}
+    cfd_max_diffs = {key: v for key, _, _, v in cfd_all_stds}
+
+    # optimal_cfd_threshold = list(cfd_stds.keys())[np.argmin(list(cfd_stds.values()))]
+    optimal_cfd_threshold = list(cfd_stat_stds.keys())[np.argmin(list(cfd_stat_stds.values()))]
+    # optimal_cfd_threshold = list(cfd_max_diffs.keys())[np.argmin(list(cfd_max_diffs.values()))]
+
+    if plot:
+        plt.figure(figsize=(11, 7))
+
+        plt.subplot(2, 2, 1)
+        plt.plot(cfd_stds.keys(), cfd_stds.values(), marker='.')
+        plt.title('Gauss - CFD resolution (train dataset)')
+        plt.xlabel('CFD threshold')
+        plt.ylabel('CFD resolution')
+        plt.grid()
+
+        plt.subplot(2, 2, 2)
+        plt.plot(cfd_stat_stds.keys(), cfd_stat_stds.values(), marker='.')
+        plt.title('Stat - CFD resolution (train dataset)')
+        plt.xlabel('CFD threshold')
+        plt.ylabel('CFD resolution')
+        plt.grid()
+
+        plt.subplot(2, 2, 3)
+        plt.plot(cfd_max_diffs.keys(), cfd_max_diffs.values(), marker='.')
+        plt.title('Max CFD differences')
+        plt.xlabel('CFD threshold')
+        plt.ylabel('Max difference')
+        plt.grid()
+
+        plt.tight_layout()
+        plt.show()
+
+    if log:
+        print(f'Optimal CFD threshold: {optimal_cfd_threshold:0.3f}')
+
+    return optimal_cfd_threshold

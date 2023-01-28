@@ -11,7 +11,7 @@ from src.gauss_hist import plot_diff_hist_stats
 def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: np.ndarray, y_train: np.ndarray,
                 X_val: np.ndarray, y_val: np.ndarray, lr: float = 0.001, train: bool = True, n_epochs: int = 1000,
                 verbose: int = 1, batch_size: int = 2048, lr_patience: int = None, es_patience: int = None,
-                loss_weights: float = None) -> pd.DataFrame:
+                loss_weights: float = None, root: str = '.') -> pd.DataFrame:
     """
     Train a Keras model.
     :param model: Keras model
@@ -30,6 +30,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
     :param lr_patience: patience of ReduceLROnPlateau
     :param es_patience: patience of EarlyStopping
     :param loss_weights: loss function values can be multiplied by this weight
+    :param root: root directory for model weights
     :return: history dict as a pd.DataFrame
     """
     model.compile(loss='mse', optimizer=optimizers.Adam(lr), loss_weights=loss_weights)
@@ -48,8 +49,8 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
                             validation_data=(X_val, y_val), callbacks=model_callbacks).history
         pd.DataFrame(history).to_csv(f'model_weights/{path_component}/{name}/loss_log.csv')
 
-    model.load_weights(f'model_weights/{path_component}/{name}/weights')
-    history = pd.read_csv(f'model_weights/{path_component}/{name}/loss_log.csv')
+    model.load_weights(f'{root}/model_weights/{path_component}/{name}/weights')
+    history = pd.read_csv(f'{root}/model_weights/{path_component}/{name}/loss_log.csv')
 
     return history
 

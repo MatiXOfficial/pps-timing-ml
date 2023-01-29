@@ -78,7 +78,7 @@ def plot_history(history: dict[str, np.array], title: str, ymax: float = None,
 
 
 def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-0.5, 0.5), n_bins=100, show=True,
-                         print_pcov=False) -> tuple[float, float, float]:
+                         close=True, print_pcov=False) -> tuple[float, float, float]:
     mu, std, pcov, fwhm = plot_diff_hist_stats(y_true, y_pred, show=False, n_bins=n_bins, hist_range=hist_range,
                                                plot_gauss=True, plot_fwhm=True)
 
@@ -88,7 +88,8 @@ def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-
     if show:
         plt.show()
     else:
-        plt.close()
+        if close:
+            plt.close()
 
     if print_pcov:
         print('Covariance matrix of the Gaussian fit:')

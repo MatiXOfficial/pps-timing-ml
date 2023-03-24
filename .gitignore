@@ -6,3 +6,5 @@
 *.npz
 *.pkl
 *.pdf
+
+data

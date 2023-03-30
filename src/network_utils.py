@@ -1,14 +1,8 @@
-from collections import defaultdict
-from typing import Callable
-
-import keras_tuner as kt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from IPython.display import display, HTML
 from matplotlib import pyplot as plt
-from sklearn.model_selection import KFold
 from tensorflow import keras
 from tensorflow.keras import callbacks
 from tensorflow.keras import optimizers
@@ -115,36 +109,3 @@ def compare_results(results, names, res_base, base_name='CFD', mult=1000, unit='
 
 def count_params(model: keras.Model) -> int:
     return sum([K.count_params(weights) for weights in model.trainable_weights])
-
-
-def cross_validate_top_hyperparameters(tuner: kt.Tuner, x: np.ndarray, y: np.ndarray,
-                                       model_builder: Callable[[kt.HyperParameters], keras.Model], n_epochs: int = 3000,
-                                       es_patience: int = 50, reduce_patience: int = 10, batch_size: int = 2048,
-                                       n_top: int = 5, n_cv: int = 5, random_state: int = 42) -> dict[int, float]:
-    model_scores = defaultdict(list)
-
-    model_callbacks = [
-        callbacks.EarlyStopping(patience=es_patience),
-        callbacks.ReduceLROnPlateau(monitor='loss', factor=0.9, patience=reduce_patience)
-    ]
-
-    for i, hyperparameters in enumerate(tuner.get_best_hyperparameters(n_top)):
-        display(HTML(f"<h3>Model {i}</h3>"))
-        print(hyperparameters.get_config()['values'])
-        model_tmp = model_builder(hyperparameters)
-        print('Number of parameters:', count_params(model_tmp))
-
-        for train, test in KFold(n_splits=n_cv, shuffle=True, random_state=random_state).split(x):
-            X_train, X_val = x[train], x[test]
-            y_train, y_val = y[train], y[test]
-
-            model = model_builder(hyperparameters)
-            model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=n_epochs,
-                      callbacks=model_callbacks, batch_size=batch_size, verbose=0)
-
-            score = model.evaluate(X_val, y_val, batch_size=batch_size, verbose=0)
-            model_scores[i].append(score)
-
-            print(f"Got score: {score}")
-
-    return dict(model_scores)

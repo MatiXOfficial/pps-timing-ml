@@ -1,4 +1,3 @@
-import keras_tuner as kt
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -22,17 +21,6 @@ def mlp_builder(hp_n_hidden_layers: int, hp_units_mult: int, hp_batch_normalizat
 
     model.add(layers.Dense(1))
     return model
-
-
-def hp_mlp_builder(hp: kt.HyperParameters) -> keras.Model:
-    hp_n_hidden_layers = hp.Int("n_hidden_layers", min_value=1, max_value=6, step=1, default=2)
-    hp_units_mult = hp.Choice("units_mult", values=[1, 2, 4, 8, 16, 32], default=4)
-    hp_batch_normalization = hp.Boolean("batch_normalization", default=False)
-    hp_input_batch_normalization = hp.Boolean("input_batch_normalization", default=False)
-    hp_dropout = hp.Choice("dropout", values=[0.0, 0.2, 0.5])
-
-    return mlp_builder(hp_n_hidden_layers, hp_units_mult, hp_batch_normalization, hp_input_batch_normalization,
-                       hp_dropout)
 
 
 def optimal_mlp_builder() -> keras.Model:
@@ -78,29 +66,6 @@ def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mul
     model.add(layers.Dense(1))
 
     return model
-
-
-def hp_convnet_builder(hp: kt.HyperParameters) -> keras.Model:
-    # Convolutional network params
-    hp_n_conv_blocks = hp.Int("n_conv_blocks", min_value=1, max_value=3, step=1)
-    hp_n_conv_layers = hp.Int("n_conv_layers", min_value=1, max_value=3, step=1)
-    hp_filters_mult = hp.Choice("conv_filters_mult", values=[1, 2, 4, 8])
-    hp_conv_spatial_dropout = hp.Choice("conv_spatial_dropout", values=[0.0, 0.1, 0.2])
-
-    # MLP at the end params
-    hp_mlp_n_hidden_layers = hp.Int("n_mlp_hidden_layers", min_value=0, max_value=3, step=1, default=0)
-    hp_mlp_units_mult, hp_mlp_dropout = None, None
-    if hp_mlp_n_hidden_layers > 0:
-        hp_mlp_units_mult = hp.Choice("mlp_units_mult", values=[1, 2, 4, 8, 16], default=4)
-        hp_mlp_dropout = hp.Choice("mlp_dropout", values=[0.0, 0.2, 0.5])
-
-    # Other params
-    hp_batch_normalization = hp.Boolean("batch_normalization", default=False)
-    hp_input_batch_normalization = hp.Boolean("input_batch_normalization", default=False)
-
-    return convnet_builder(hp_n_conv_blocks, hp_n_conv_layers, hp_filters_mult, hp_conv_spatial_dropout,
-                           hp_mlp_n_hidden_layers, hp_mlp_units_mult, hp_mlp_dropout, hp_batch_normalization,
-                           hp_input_batch_normalization)
 
 
 def optimal_convnet_builder() -> keras.Model:
@@ -168,19 +133,35 @@ def unet_builder(hp_unet_depth: int, hp_n_conv_layers: int, hp_filters_mult: int
     return model
 
 
-def hp_unet_builder(hp: kt.HyperParameters) -> keras.Model:
-    hp_unet_depth = hp.Int("unet_depth", min_value=0, max_value=3, step=1, default=2)
-    hp_n_conv_layers = hp.Int("n_conv_layers", min_value=1, max_value=3, step=1)
-    hp_filters_mult = hp.Choice("conv_filters_mult", values=[1, 2, 4, 8, 16], default=4)
-    hp_spatial_dropout = hp.Choice("conv_spatial_dropout", values=[0.0, 0.1, 0.2])
-    hp_batch_normalization = hp.Boolean("batch_normalization", default=False)
-    hp_input_batch_normalization = hp.Boolean("input_batch_normalization", default=False)
-
-    return unet_builder(hp_unet_depth, hp_n_conv_layers, hp_filters_mult, hp_spatial_dropout, hp_batch_normalization,
-                        hp_input_batch_normalization)
-
-
 def optimal_unet_builder() -> keras.Model:
+    pass
+
+
+def rnn_builder(hp_rnn_type: str, hp_n_neurons: int, hp_n_hidden_layers: int,
+                hp_input_batch_normalization: bool) -> keras.Model:
+    if hp_rnn_type == "lstm":
+        RnnLayerType = layers.LSTM
+    elif hp_rnn_type == "gru":
+        RnnLayerType = layers.GRU
+    else:
+        raise ValueError(f"Wrong RNN type: {hp_rnn_type}")
+
+    model = keras.Sequential()
+    model.add(layers.Input(24))
+    model.add(layers.Reshape((-1, 1))),
+    if hp_input_batch_normalization:
+        model.add(layers.BatchNormalization())
+
+    for _ in range(hp_n_hidden_layers):
+        model.add(RnnLayerType(hp_n_neurons, return_sequences=True))
+
+    model.add(RnnLayerType(hp_n_neurons))
+
+    model.add(layers.Dense(1))
+    return model
+
+
+def optimal_rnn_builder() -> keras.Model:
     pass
 
 

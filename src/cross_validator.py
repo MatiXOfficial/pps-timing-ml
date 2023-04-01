@@ -45,7 +45,8 @@ class CrossValidator:
         for i_builder in range(len(self.model_builders)):
             self._print_model_log(i_builder)
 
-            hp_results_file = project_dir / (str(i_builder) + '.pkl')
+            name = self.model_names[i_builder] if self.model_names is not None else i_builder
+            hp_results_file = project_dir / (str(name) + '.pkl')
             if self.overwrite or not hp_results_file.is_file():
                 hp_scores = self._compute_hp_scores(i_builder)
                 with open(hp_results_file, 'wb') as file:
@@ -56,7 +57,7 @@ class CrossValidator:
                 for split_scores in hp_scores:
                     self._print_split_scores_log(split_scores)
 
-            model_scores[i_builder] = [np.average(split_scores) for split_scores in hp_scores]
+            model_scores[name] = [np.average(split_scores) for split_scores in hp_scores]
 
         return model_scores
 
@@ -88,7 +89,8 @@ class CrossValidator:
                   callbacks=self.model_callbacks, batch_size=self.batch_size, verbose=0)
 
         if self.eval_metric is not None:
-            score = self.eval_metric(x_val, y_val)
+            y_pred = model.predict(x_val, batch_size=self.batch_size, verbose=0)
+            score = self.eval_metric(y_val, y_pred)
         else:
             score = model.evaluate(x_val, y_val, batch_size=self.batch_size, verbose=0)
         return score

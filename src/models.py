@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import Callable
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -21,10 +24,6 @@ def mlp_builder(hp_n_hidden_layers: int, hp_units_mult: int, hp_batch_normalizat
 
     model.add(layers.Dense(1))
     return model
-
-
-def optimal_mlp_builder() -> keras.Model:
-    pass
 
 
 def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mult: int, hp_conv_spatial_dropout: float,
@@ -66,10 +65,6 @@ def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mul
     model.add(layers.Dense(1))
 
     return model
-
-
-def optimal_convnet_builder() -> keras.Model:
-    pass
 
 
 def _conv_block(x, n_filters, kernel_size: int = 2, n_conv_layers: int = 1, batch_normalization: bool = False,
@@ -133,10 +128,6 @@ def unet_builder(hp_unet_depth: int, hp_n_conv_layers: int, hp_filters_mult: int
     return model
 
 
-def optimal_unet_builder() -> keras.Model:
-    pass
-
-
 def rnn_builder(hp_rnn_type: str, hp_n_neurons: int, hp_n_hidden_layers: int,
                 hp_input_batch_normalization: bool) -> keras.Model:
     if hp_rnn_type == "lstm":
@@ -161,9 +152,24 @@ def rnn_builder(hp_rnn_type: str, hp_n_neurons: int, hp_n_hidden_layers: int,
     return model
 
 
-def optimal_rnn_builder() -> keras.Model:
-    pass
+@dataclass
+class OptimalModelBuilders:
+    mlp: Callable[[], keras.Model]
+    convnet: Callable[[], keras.Model]
+    unet: Callable[[], keras.Model]
+    rnn: Callable[[], keras.Model]
 
 
-def optimal_model_builder() -> keras.Model:
-    pass
+optimal_model_builders_ch_2_11 = OptimalModelBuilders(
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=4, hp_units_mult=8, hp_batch_normalization=True,
+                            hp_input_batch_normalization=True, hp_dropout=0.2),
+
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=4,
+                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=2, hp_batch_normalization=True,
+                                    hp_input_batch_normalization=True, hp_mlp_units_mult=4, hp_mlp_dropout=0.2),
+
+    unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=3, hp_filters_mult=1, hp_spatial_dropout=0.0,
+                              hp_batch_normalization=False, hp_input_batch_normalization=True),
+
+    rnn=lambda: rnn_builder(hp_rnn_type='gru', hp_n_neurons=64, hp_n_hidden_layers=0, hp_input_batch_normalization=True)
+)

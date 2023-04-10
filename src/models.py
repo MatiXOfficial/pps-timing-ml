@@ -6,17 +6,19 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 
-def mlp_builder(hp_n_hidden_layers: int, hp_units_mult: int, hp_batch_normalization: bool,
-                hp_input_batch_normalization: bool, hp_dropout: float) -> keras.Model:
+def mlp_builder(hp_n_hidden_layers: int, hp_units_mult: int, hp_unit_decrease_factor: float,
+                hp_batch_normalization: bool, hp_input_batch_normalization: bool, hp_dropout: float) -> keras.Model:
     model = keras.Sequential()
     model.add(layers.Input(24))
     if hp_input_batch_normalization:
         model.add(layers.BatchNormalization())
 
-    n_units = 3 * (2 ** (hp_n_hidden_layers - 1)) * hp_units_mult
-    for _ in range(hp_n_hidden_layers):
+    n_units_list = [3 * hp_units_mult]
+    for _ in range(hp_n_hidden_layers - 1):
+        n_units_list.append(int(n_units_list[-1] * hp_unit_decrease_factor))
+
+    for n_units in n_units_list:
         model.add(layers.Dense(n_units, activation='relu'))
-        n_units //= 2
         if hp_batch_normalization:
             model.add(layers.BatchNormalization())
         if hp_dropout > 0:
@@ -161,15 +163,16 @@ class OptimalModelBuilders:
 
 
 optimal_model_builders_ch_2_11 = OptimalModelBuilders(
-    mlp=lambda: mlp_builder(hp_n_hidden_layers=4, hp_units_mult=8, hp_batch_normalization=True,
-                            hp_input_batch_normalization=True, hp_dropout=0.2),
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=7, hp_units_mult=2, hp_unit_decrease_factor=1.0,
+                            hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0),
 
-    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=4,
-                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=2, hp_batch_normalization=True,
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=2, hp_filters_mult=4,
+                                    hp_conv_spatial_dropout=0.1, hp_mlp_n_hidden_layers=2, hp_batch_normalization=True,
                                     hp_input_batch_normalization=True, hp_mlp_units_mult=4, hp_mlp_dropout=0.2),
 
-    unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=3, hp_filters_mult=1, hp_spatial_dropout=0.0,
+    unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=2, hp_filters_mult=4, hp_spatial_dropout=0.0,
                               hp_batch_normalization=False, hp_input_batch_normalization=True),
 
-    rnn=lambda: rnn_builder(hp_rnn_type='gru', hp_n_neurons=64, hp_n_hidden_layers=0, hp_input_batch_normalization=True)
+    rnn=lambda: rnn_builder(hp_rnn_type='gru', hp_n_neurons=128, hp_n_hidden_layers=0,
+                            hp_input_batch_normalization=True)
 )

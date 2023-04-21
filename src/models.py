@@ -176,3 +176,6 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
     rnn=lambda: rnn_builder(hp_rnn_type='gru', hp_n_neurons=128, hp_n_hidden_layers=0,
                             hp_input_batch_normalization=True)
 )
+
+
+optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.convnet

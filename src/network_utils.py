@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tensorflow.keras.backend as K
 from matplotlib import pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import callbacks
@@ -13,7 +12,7 @@ from src.gauss_hist import plot_diff_hist_stats
 def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: np.ndarray, y_train: np.ndarray,
                 X_val: np.ndarray, y_val: np.ndarray, lr: float = 0.001, train: bool = True, n_epochs: int = 1000,
                 verbose: int = 1, batch_size: int = 2048, lr_patience: int = None, es_patience: int = None,
-                loss_weights: float = None, root: str = '.') -> pd.DataFrame:
+                es_min_delta: float = 0.01, loss_weights: float = None, root: str = '.') -> pd.DataFrame:
     """
     Train a Keras model.
     :param model: Keras model
@@ -31,6 +30,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
     :param batch_size:
     :param lr_patience: patience of ReduceLROnPlateau
     :param es_patience: patience of EarlyStopping
+    :param es_min_delta: min delta of EarlyStopping
     :param loss_weights: loss function values can be multiplied by this weight
     :param root: root directory for model weights
     :return: history dict as a pd.DataFrame
@@ -42,7 +42,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
                                   save_weights_only=True)
     ]
     if es_patience is not None:
-        model_callbacks.append(callbacks.EarlyStopping(patience=es_patience))
+        model_callbacks.append(callbacks.EarlyStopping(patience=es_patience, min_delta=es_min_delta))
     if lr_patience is not None:
         model_callbacks.append(callbacks.ReduceLROnPlateau(monitor='loss', factor=0.9, patience=lr_patience))
 
@@ -57,7 +57,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
     return history
 
 
-def plot_history(history: dict[str, np.array], title: str, ymax: float = None,
+def plot_history(history: dict[str, np.array], title: str | None = None, ymax: float | None = None,
                  figsize: tuple[float, float] = (8, 6)) -> None:
     plt.figure(figsize=figsize)
 
@@ -75,7 +75,8 @@ def plot_history(history: dict[str, np.array], title: str, ymax: float = None,
     plt.grid()
     plt.legend()
 
-    plt.suptitle(title)
+    if title is not None:
+        plt.suptitle(title)
     plt.show()
 
 
@@ -108,4 +109,4 @@ def compare_results(results, names, res_base, base_name='CFD', mult=1000, unit='
 
 
 def count_params(model: keras.Model) -> int:
-    return sum([K.count_params(weights) for weights in model.trainable_weights])
+    return model.count_params()

@@ -6,6 +6,7 @@ from tensorflow import keras
 from tensorflow.keras import callbacks
 from tensorflow.keras import optimizers
 
+from src.dataset import TIME_STEP
 from src.gauss_hist import plot_diff_hist_stats
 
 
@@ -110,3 +111,27 @@ def compare_results(results, names, res_base, base_name='CFD', mult=1000, unit='
 
 def count_params(model: keras.Model) -> int:
     return model.count_params()
+
+
+def gaussian_kernel(mu, sigma=1., n=24):
+    mu /= TIME_STEP
+    x = np.arange(0, n)
+    return np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
+
+
+def dist_kernel(y: int, n: int = 24) -> np.ndarray:
+    x = np.arange(n) * TIME_STEP
+    return x - y
+
+
+def get_dist_root(y: np.ndarray, n: int = 24) -> float:
+    i = 0
+    while i < n and y[i] < 0:
+        i += 1
+
+    if i == 0 or i == n:
+        raise ValueError("Could not find a root")
+    else:
+        a = -y[i - 1]
+        b = TIME_STEP - y[i]
+        return TIME_STEP * (i - 1) + (a + b) / 2.

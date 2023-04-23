@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-TIME_STEP = 7.695
-X_TIME = np.arange(0, 24) / TIME_STEP
+TIME_STEP = 1. / 7.695
+X_TIME = np.arange(0, 24) * TIME_STEP
 X_TIME_MAX = X_TIME[-1]
 
 DATASET_ROOT_PATH = Path('data/dataset/dataset.pkl')

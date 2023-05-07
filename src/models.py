@@ -59,7 +59,7 @@ def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mul
 
     # Convolutional network
     n_filters = 8 * hp_filters_mult
-    for _ in range(hp_n_conv_blocks):  # block
+    for i in range(hp_n_conv_blocks):  # block
         for _ in range(hp_n_conv_layers):  # layer
             model.add(layers.Conv1D(n_filters, 3, padding='same', activation='relu'))
             if hp_batch_normalization:
@@ -67,7 +67,8 @@ def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mul
             if hp_conv_spatial_dropout:
                 model.add(layers.SpatialDropout1D(hp_conv_spatial_dropout))
 
-        model.add(layers.MaxPooling1D())
+        if i < hp_n_conv_blocks - 1:
+            model.add(layers.MaxPooling1D())
         n_filters *= 2
 
     model.add(layers.Flatten())
@@ -197,10 +198,10 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
                             hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0,
                             hp_normalize_signal=False),
 
-    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=1,
-                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=3, hp_batch_normalization=True,
-                                    hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=16,
-                                    hp_mlp_dropout=0.5),
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=2, hp_filters_mult=2,
+                                    hp_conv_spatial_dropout=0.1, hp_mlp_n_hidden_layers=1, hp_batch_normalization=True,
+                                    hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=8,
+                                    hp_mlp_dropout=0.2),
 
     unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=1, hp_filters_mult=1, hp_spatial_dropout=0.1,
                               hp_batch_normalization=True, hp_input_batch_normalization=True,

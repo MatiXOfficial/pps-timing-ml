@@ -215,4 +215,4 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
                             hp_input_batch_normalization=True, hp_normalize_signal=False)
 )
 
-optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.convnet
+optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.unet

@@ -130,7 +130,7 @@ def get_dist_root(y: np.ndarray, n: int = 24) -> float:
         i += 1
 
     if i == 0 or i == n:
-        raise ValueError("Could not find a root")
+        return TIME_STEP * i
     else:
         a = -y[i - 1]
         b = TIME_STEP - y[i]

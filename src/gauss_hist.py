@@ -95,8 +95,8 @@ def plot_gauss_hist(x: np.ndarray, show: bool = True, n_bins: int = 100, hist_ra
         gauss_y *= a / np.max(gauss_y)
         plt.plot(bins_x, gauss_y, 'r--', linewidth=2)
 
-    if plot_fwhm:
-        plt.plot([first_cross, last_cross], [half_max, half_max], c='purple', linewidth=2)
+    # if plot_fwhm:
+    #     plt.plot([first_cross, last_cross], [half_max, half_max], c='purple', linewidth=2)
 
     plt.xlabel(xlabel)
     if show:

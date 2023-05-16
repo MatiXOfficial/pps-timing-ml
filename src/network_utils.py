@@ -82,7 +82,7 @@ def plot_history(history: dict[str, np.array], title: str | None = None, ymax: f
 
 
 def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-0.5, 0.5), n_bins=100, show=True,
-                         close=True, print_pcov=False) -> tuple[float, float, float]:
+                         close=True, print_pcov=False, return_mu=False):
     mu, std, pcov, fwhm = plot_diff_hist_stats(y_true, y_pred, show=False, n_bins=n_bins, hist_range=hist_range,
                                                plot_gauss=True, plot_fwhm=True)
 
@@ -99,7 +99,10 @@ def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-
         print('Covariance matrix of the Gaussian fit:')
         print(pcov)
 
-    return std, pcov, fwhm
+    if not return_mu:
+        return std, pcov, fwhm
+    else:
+        return mu, std, pcov, fwhm
 
 
 def compare_results(results, names, res_base, base_name='CFD', mult=1000, unit='ps') -> None:

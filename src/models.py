@@ -140,7 +140,8 @@ def unet_builder(hp_unet_depth: int, hp_n_conv_layers: int, hp_filters_mult: int
         skip_layers.append(skip)
 
     # Bottleneck
-    x, _ = _conv_block(x, n_filters)
+    x, _ = _conv_block(x, n_filters, n_conv_layers=hp_n_conv_layers, batch_normalization=hp_batch_normalization,
+                       spatial_dropout=hp_spatial_dropout)
 
     # Decoder
     for _ in range(hp_unet_depth):

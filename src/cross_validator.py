@@ -113,6 +113,47 @@ class CrossValidator:
             print(f"Got score: {avg_score:0.4f} ({scores_str})")
 
 
+class ChannelCrossValidator(CrossValidator):
+    def __init__(self, model_builders: list[[], keras.Model], x: list[np.ndarray], y: list[np.ndarray],
+                 directory: Path | str, project_name: Path | str, overwrite: bool = True, n_epochs: int = 3000,
+                 es_patience: int = 60, es_min_delta: float = 0.01, reduce_patience: int = 10, batch_size: int = 2048,
+                 n_executions: int = 1, random_state: int = 42, model_names: list[str] | None = None,
+                 eval_metric: Callable[[np.ndarray, np.ndarray], float] | None = None):
+        if len(x) != len(y):
+            raise ValueError(f"Different numbers of channels in x ({len(x)}) and y ({len(y)})")
+
+        n_cv = len(x)
+        super().__init__(model_builders, np.array([]), np.array([]), directory, project_name, overwrite, n_epochs,
+                         es_patience, es_min_delta, reduce_patience, batch_size, n_cv, n_executions, random_state,
+                         model_names, eval_metric)
+        self.x = x
+        self.y = y
+
+    def _compute_hp_scores(self, i_builder: int) -> list[list[float]]:
+        hp_scores = []
+        for i in range(min(len(self.x), self.n_cv)):
+            X_val = self.x[i]
+            y_val = self.y[i]
+            X_train = np.concatenate(self.x[:i] + self.x[i + 1:])
+            y_train = np.concatenate(self.y[:i] + self.y[i + 1:])
+
+            rng = np.random.default_rng(seed=self.random_state)
+            rng.shuffle(X_val)
+            rng.shuffle(y_val)
+            rng.shuffle(X_train)
+            rng.shuffle(y_train)
+
+            split_scores = []
+            for _ in range(self.n_executions):
+                score = self._compute_single_score(i_builder, X_train, y_train, X_val, y_val)
+                split_scores.append(score)
+
+            self._print_split_scores_log(split_scores)
+            hp_scores.append(split_scores)
+
+        return hp_scores
+
+
 class KerasTunerCrossValidator(CrossValidator):
     def __init__(self, tuner: kt.Tuner, x: np.ndarray, y: np.ndarray,
                  model_builder: Callable[[kt.HyperParameters], keras.Model], directory: Path | str,
@@ -122,6 +163,26 @@ class KerasTunerCrossValidator(CrossValidator):
         model_builders = [lambda hp=hp: model_builder(hp) for hp in tuner.get_best_hyperparameters(n_top)]
         super().__init__(model_builders, x, y, directory, project_name, overwrite, n_epochs, es_patience, es_min_delta,
                          reduce_patience, batch_size, n_cv, n_executions, random_state)
+
+        self.tuner = tuner
+
+    def _print_model_log(self, i_builder: int) -> None:
+        display(HTML(f"<h3>Model {i_builder}</h3>"))
+        hp = self.tuner.get_best_hyperparameters(i_builder + 1)[i_builder]
+        print(hp.get_config()['values'])
+        model_tmp = self.model_builders[i_builder]()
+        print('Number of parameters:', count_params(model_tmp))
+
+
+class KerasTunerChannelCrossValidator(ChannelCrossValidator):
+    def __init__(self, tuner: kt.Tuner, x: list[np.ndarray], y: list[np.ndarray],
+                 model_builder: Callable[[kt.HyperParameters], keras.Model], directory: Path | str,
+                 project_name: Path | str, overwrite: bool = True, n_epochs: int = 3000, es_patience: int = 50,
+                 es_min_delta: float = 0.01, reduce_patience: int = 10, batch_size: int = 2048, n_top: int = 5,
+                 n_executions: int = 1, random_state: int = 42):
+        model_builders = [lambda hp=hp: model_builder(hp) for hp in tuner.get_best_hyperparameters(n_top)]
+        super().__init__(model_builders, x, y, directory, project_name, overwrite, n_epochs, es_patience, es_min_delta,
+                         reduce_patience, batch_size, n_executions, random_state)
 
         self.tuner = tuner
 

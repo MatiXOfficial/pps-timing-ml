@@ -48,7 +48,7 @@ class CrossValidator:
             name = self.model_names[i_builder] if self.model_names is not None else i_builder
             hp_results_file = project_dir / (str(name) + '.pkl')
             if self.overwrite or not hp_results_file.is_file():
-                hp_scores = self._compute_hp_scores(i_builder)
+                hp_scores = self._compute_hp_scores(i_builder, project_dir, str(name))
                 with open(hp_results_file, 'wb') as file:
                     pickle.dump(hp_scores, file)
             else:
@@ -66,15 +66,23 @@ class CrossValidator:
         project_dir.mkdir(parents=True, exist_ok=True)
         return project_dir
 
-    def _compute_hp_scores(self, i_builder: int) -> list[list[float]]:
+    def _compute_hp_scores(self, i_builder: int, project_dir: Path, name: str) -> list[list[float]]:
         hp_scores = []
-        for train, test in KFold(n_splits=self.n_cv, shuffle=True, random_state=self.random_state).split(self.x):
+        for i_cv, (train, test) in enumerate(
+                KFold(n_splits=self.n_cv, shuffle=True, random_state=self.random_state).split(self.x)):
             X_train, X_val = self.x[train], self.x[test]
             y_train, y_val = self.y[train], self.y[test]
 
             split_scores = []
-            for _ in range(self.n_executions):
-                score = self._compute_single_score(i_builder, X_train, y_train, X_val, y_val)
+            for i_exec in range(self.n_executions):
+                exec_file = project_dir / f'{name}_{i_cv}_{i_exec}.pkl'
+                if self.overwrite or not exec_file.is_file():
+                    score = self._compute_single_score(i_builder, X_train, y_train, X_val, y_val)
+                    with open(exec_file, 'wb') as file:
+                        pickle.dump(score, file)
+                else:
+                    with open(exec_file, 'rb') as file:
+                        score = pickle.load(file)
                 split_scores.append(score)
 
             self._print_split_scores_log(split_scores)
@@ -128,13 +136,13 @@ class AllChannelsCrossValidator(CrossValidator):
         self.x = x
         self.y = y
 
-    def _compute_hp_scores(self, i_builder: int) -> list[list[float]]:
+    def _compute_hp_scores(self, i_builder: int, project_dir: Path, name: str) -> list[list[float]]:
         dataset_folds = self._build_dataset_folds()
         hp_scores = []
-        for i_fold in range(self.n_cv):
+        for i_cv in range(self.n_cv):
             X_train, y_train, X_val, y_val = [], [], [], []
             for i_channel, (x_channel, y_channel) in enumerate(zip(self.x, self.y)):
-                train_idx, test_idx = dataset_folds[i_channel][i_fold]
+                train_idx, test_idx = dataset_folds[i_channel][i_cv]
                 X_train.append(x_channel[train_idx])
                 y_train.append(y_channel[train_idx])
                 X_val.append(x_channel[test_idx])
@@ -144,7 +152,14 @@ class AllChannelsCrossValidator(CrossValidator):
 
             split_scores = []
             for i_exec in range(self.n_executions):
-                score = self._compute_single_score(i_builder, X_train, y_train, X_val, y_val)
+                exec_file = project_dir / f'{name}_{i_cv}_{i_exec}.pkl'
+                if self.overwrite or not exec_file.is_file():
+                    score = self._compute_single_score(i_builder, X_train, y_train, X_val, y_val)
+                    with open(exec_file, 'wb') as file:
+                        pickle.dump(score, file)
+                else:
+                    with open(exec_file, 'rb') as file:
+                        score = pickle.load(file)
                 split_scores.append(score)
 
             self._print_split_scores_log(split_scores)

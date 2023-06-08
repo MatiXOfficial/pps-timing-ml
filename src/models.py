@@ -152,7 +152,7 @@ def unet_builder(hp_unet_depth: int, hp_n_conv_layers: int, hp_filters_mult: int
     x = layers.Conv1D(1, 1, activation='linear')(x)
 
     outputs = layers.Flatten()(x)
-    model = tf.keras.Model(inputs, outputs)
+    model = keras.Model(inputs, outputs)
 
     return model
 
@@ -190,8 +190,8 @@ class OptimalModelBuilders:
     mlp: Callable[[], keras.Model]
     convnet: Callable[[], keras.Model]
     unet: Callable[[], keras.Model]
-    unet_dist: Callable[[], keras.Model]
     rnn: Callable[[], keras.Model]
+    unet_dist: Callable[[], keras.Model] | None = None
 
 
 optimal_model_builders_ch_2_11 = OptimalModelBuilders(
@@ -217,3 +217,23 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
 )
 
 optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.unet
+
+optimal_model_builders_all_ch = OptimalModelBuilders(
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=5, hp_units_mult=8, hp_unit_decrease_factor=1.0,
+                            hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0,
+                            hp_normalize_signal=False),
+
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=4, hp_n_conv_layers=1, hp_filters_mult=2,
+                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=1, hp_batch_normalization=False,
+                                    hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=8,
+                                    hp_mlp_dropout=0.0),
+
+    unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=3, hp_filters_mult=8, hp_spatial_dropout=0.2,
+                              hp_batch_normalization=True, hp_input_batch_normalization=True,
+                              hp_normalize_signal=False),
+
+    rnn=lambda: rnn_builder(hp_rnn_type='lstm', hp_n_neurons=64, hp_n_hidden_layers=1,
+                            hp_input_batch_normalization=True, hp_normalize_signal=False)
+)
+
+optimal_model_builder_all_ch = optimal_model_builders_all_ch.unet

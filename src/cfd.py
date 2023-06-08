@@ -29,7 +29,7 @@ class CFD:
         self.kernel_sigma = kernel_sigma
         self.log = log
 
-    def predict_single(self, x: np.ndarray, Y: np.ndarray, baseline_threshold: float = None) -> None | float:
+    def predict_single(self, x: np.ndarray | None, Y: np.ndarray, baseline_threshold: float = None) -> None | float:
         """
         Find the timestamp of a single time series
         :param x: x axis data (time)
@@ -88,7 +88,10 @@ class CFD:
         """
         t_pred = []
         for y in Y:
-            t_pred.append(self.predict_single(x, y, baseline_threshold))
+            if y is None:
+                t_pred.append(None)
+            else:
+                t_pred.append(self.predict_single(x, y, baseline_threshold))
 
         t_pred = np.array(t_pred)
         return t_pred

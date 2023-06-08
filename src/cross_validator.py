@@ -123,8 +123,8 @@ class CrossValidator:
 
 class AllChannelsCrossValidator(CrossValidator):
     def __init__(self, model_builders: list[Callable[[], keras.Model]], x: list[np.ndarray], y: list[np.ndarray],
-                 directory: Path | str, project_name: Path | str, overwrite: bool = True, n_epochs: int = 3000,
-                 es_patience: int = 60, es_min_delta: float = 0.01, reduce_patience: int = 10, batch_size: int = 2048,
+                 directory: Path | str, project_name: Path | str, overwrite: bool = True, n_epochs: int = 500,
+                 es_patience: int = 30, es_min_delta: float = 0.01, reduce_patience: int = 5, batch_size: int = 8192,
                  n_cv: int = 5, n_executions: int = 1, random_state: int = 42, model_names: list[str] | None = None,
                  eval_metric: Callable[[np.ndarray, np.ndarray], float] | None = None):
         if len(x) != len(y):
@@ -217,8 +217,8 @@ class KerasTunerCrossValidator(CrossValidator):
 class KerasTunerAllChannelsCrossValidator(AllChannelsCrossValidator):
     def __init__(self, tuner: kt.Tuner, x: list[np.ndarray], y: list[np.ndarray],
                  model_builder: Callable[[kt.HyperParameters], keras.Model], directory: Path | str,
-                 project_name: Path | str, overwrite: bool = True, n_epochs: int = 3000, es_patience: int = 50,
-                 es_min_delta: float = 0.01, reduce_patience: int = 10, batch_size: int = 2048, n_top: int = 5,
+                 project_name: Path | str, overwrite: bool = True, n_epochs: int = 500, es_patience: int = 30,
+                 es_min_delta: float = 0.01, reduce_patience: int = 5, batch_size: int = 8192, n_top: int = 5,
                  n_cv: int = 5, n_executions: int = 1, random_state: int = 42):
         model_builders = [lambda hp=hp: model_builder(hp) for hp in tuner.get_best_hyperparameters(n_top)]
         super().__init__(model_builders, x, y, directory, project_name, overwrite, n_epochs, es_patience, es_min_delta,

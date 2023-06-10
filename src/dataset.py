@@ -9,6 +9,7 @@ X_TIME = np.arange(0, 24) * TIME_STEP
 X_TIME_MAX = X_TIME[-1]
 
 DATASET_ROOT_PATH = Path('data/dataset/dataset.pkl')
+EXPANDED_DATASET_ROOT_PATH = Path('data/dataset/dataset_exp.pkl')
 
 
 def load_dataset(pwd: Path, plane: int, channel: int) -> tuple[np.ndarray, np.ndarray]:
@@ -83,3 +84,46 @@ def load_dataset_train_val_all_channels(
         y_val[(plane, channel)] = y_val_ch
 
     return x_train, x_val, y_train, y_val
+
+
+def load_expanded_dataset(pwd: Path) -> tuple[np.ndarray, dict, dict]:
+    with open(pwd / EXPANDED_DATASET_ROOT_PATH, 'rb') as file:
+        dataset = pickle.load(file)
+
+    return dataset
+
+
+def _extract_dataset_by_idx(dataset: tuple[np.ndarray, dict, dict], idx: np.ndarray) -> tuple[np.ndarray, dict, dict]:
+    dataset_t_cfd_avg, dataset_wav, dataset_t0 = dataset
+
+    new_t_cfd_avg = dataset_t_cfd_avg[idx]
+    new_wav, new_t0 = {}, {}
+    for key in dataset_wav.keys():
+        new_wav[key] = dataset_wav[key][idx]
+        new_t0[key] = dataset_t0[key][idx]
+
+    return new_t_cfd_avg, new_wav, new_t0
+
+
+def load_expanded_dataset_train_test(
+        pwd: Path, test_size: float = 0.2, random_state: int = 42
+) -> tuple[tuple[np.ndarray, dict, dict], tuple[np.ndarray, dict, dict]]:
+    dataset = load_expanded_dataset(pwd)
+    train_idx, test_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
+                                           random_state=random_state)
+
+    train_dataset = _extract_dataset_by_idx(dataset, train_idx)
+    test_dataset = _extract_dataset_by_idx(dataset, test_idx)
+    return train_dataset, test_dataset
+
+
+def load_expanded_dataset_train_val(
+        pwd: Path, test_size: float = 0.2, random_state: int = 42
+) -> tuple[tuple[np.ndarray, dict, dict], tuple[np.ndarray, dict, dict]]:
+    dataset, _ = load_expanded_dataset_train_test(pwd, test_size, random_state)
+    train_idx, val_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
+                                          random_state=random_state)
+
+    train_dataset = _extract_dataset_by_idx(dataset, train_idx)
+    val_dataset = _extract_dataset_by_idx(dataset, val_idx)
+    return train_dataset, val_dataset

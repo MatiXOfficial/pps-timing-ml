@@ -86,28 +86,31 @@ def load_dataset_train_val_all_channels(
     return x_train, x_val, y_train, y_val
 
 
-def load_expanded_dataset(pwd: Path) -> tuple[np.ndarray, dict, dict]:
+def load_expanded_dataset(pwd: Path) -> tuple[np.ndarray, dict, dict, dict]:
     with open(pwd / EXPANDED_DATASET_ROOT_PATH, 'rb') as file:
         dataset = pickle.load(file)
 
     return dataset
 
 
-def _extract_dataset_by_idx(dataset: tuple[np.ndarray, dict, dict], idx: np.ndarray) -> tuple[np.ndarray, dict, dict]:
-    dataset_t_cfd_avg, dataset_wav, dataset_t0 = dataset
+def _extract_dataset_by_idx(
+        dataset: tuple[np.ndarray, dict, dict, dict], idx: np.ndarray
+) -> tuple[np.ndarray, dict, dict, dict]:
+    dataset_t_cfd_avg, dataset_wav, dataset_t0, dataset_t_pred = dataset
 
     new_t_cfd_avg = dataset_t_cfd_avg[idx]
-    new_wav, new_t0 = {}, {}
+    new_wav, new_t0, new_t_pred = {}, {}, {}
     for key in dataset_wav.keys():
         new_wav[key] = dataset_wav[key][idx]
         new_t0[key] = dataset_t0[key][idx]
+        new_t_pred[key] = dataset_t_pred[key][idx]
 
-    return new_t_cfd_avg, new_wav, new_t0
+    return new_t_cfd_avg, new_wav, new_t0, new_t_pred
 
 
 def load_expanded_dataset_train_test(
         pwd: Path, test_size: float = 0.2, random_state: int = 42
-) -> tuple[tuple[np.ndarray, dict, dict], tuple[np.ndarray, dict, dict]]:
+) -> tuple[tuple[np.ndarray, dict, dict, dict], tuple[np.ndarray, dict, dict, dict]]:
     dataset = load_expanded_dataset(pwd)
     train_idx, test_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
                                            random_state=random_state)
@@ -119,7 +122,7 @@ def load_expanded_dataset_train_test(
 
 def load_expanded_dataset_train_val(
         pwd: Path, test_size: float = 0.2, random_state: int = 42
-) -> tuple[tuple[np.ndarray, dict, dict], tuple[np.ndarray, dict, dict]]:
+) -> tuple[tuple[np.ndarray, dict, dict, dict], tuple[np.ndarray, dict, dict, dict]]:
     dataset, _ = load_expanded_dataset_train_test(pwd, test_size, random_state)
     train_idx, val_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
                                           random_state=random_state)

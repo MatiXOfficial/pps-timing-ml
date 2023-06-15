@@ -40,7 +40,7 @@ def print_pairwise_precisions(precisions: dict[tuple[PlaneChannel, PlaneChannel]
     channel_mutual_precisions: dict[int, dict[PlaneChannel, float]] = defaultdict(dict)
     for ((x_p, x_ch), (y_p, y_ch)), precision in precisions.items():
         assert x_ch == y_ch
-        channel_mutual_precisions[x_ch][(x_p, y_p)] = precision * 1000
+        channel_mutual_precisions[x_ch][(x_p, y_p)] = precision
 
     for ch, data in channel_mutual_precisions.items():
         for (p_1, p_2), prec in data.items():

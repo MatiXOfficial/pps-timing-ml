@@ -1,5 +1,7 @@
 import pickle
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -86,47 +88,59 @@ def load_dataset_train_val_all_channels(
     return x_train, x_val, y_train, y_val
 
 
-def load_expanded_dataset(pwd: Path) -> tuple[np.ndarray, dict, dict, dict]:
+@dataclass
+class ExpandedDataset:
+    t_avg: np.ndarray
+    wav: dict[tuple[int, int], np.ndarray]
+    t0: dict[tuple[int, int], np.ndarray]
+    t_pred: dict[tuple[int, int], np.ndarray]
+    t_ref: dict[tuple[int, int], np.ndarray] | None = None
+
+    def keys(self) -> Iterable[tuple[int, int]]:
+        return self.wav.keys()
+
+    def extract_by_idx(self, idx: np.ndarray) -> 'ExpandedDataset':
+        new_t_avg = self.t_avg[idx]
+        new_wav, new_t0, new_t_pred = {}, {}, {}
+        new_t_ref = {} if self.t_ref is not None else None
+
+        for key in self.keys():
+            new_wav[key] = self.wav[key][idx]
+            new_t0[key] = self.t0[key][idx]
+            new_t_pred[key] = self.t_pred[key][idx]
+            if self.t_ref is not None:
+                new_t_ref[key] = self.t_ref[key][idx]
+
+        return ExpandedDataset(t_avg=new_t_avg, wav=new_wav, t0=new_t0, t_pred=new_t_pred, t_ref=new_t_ref)
+
+    def __len__(self):
+        return len(self.t_avg)
+
+
+def load_expanded_dataset(pwd: Path) -> ExpandedDataset:
     with open(pwd / EXPANDED_DATASET_ROOT_PATH, 'rb') as file:
         dataset = pickle.load(file)
 
     return dataset
 
 
-def _extract_dataset_by_idx(
-        dataset: tuple[np.ndarray, dict, dict, dict], idx: np.ndarray
-) -> tuple[np.ndarray, dict, dict, dict]:
-    dataset_t_cfd_avg, dataset_wav, dataset_t0, dataset_t_pred = dataset
-
-    new_t_cfd_avg = dataset_t_cfd_avg[idx]
-    new_wav, new_t0, new_t_pred = {}, {}, {}
-    for key in dataset_wav.keys():
-        new_wav[key] = dataset_wav[key][idx]
-        new_t0[key] = dataset_t0[key][idx]
-        new_t_pred[key] = dataset_t_pred[key][idx]
-
-    return new_t_cfd_avg, new_wav, new_t0, new_t_pred
-
-
 def load_expanded_dataset_train_test(
         pwd: Path, test_size: float = 0.2, random_state: int = 42
-) -> tuple[tuple[np.ndarray, dict, dict, dict], tuple[np.ndarray, dict, dict, dict]]:
+) -> tuple[ExpandedDataset, ExpandedDataset]:
     dataset = load_expanded_dataset(pwd)
-    train_idx, test_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
-                                           random_state=random_state)
+    train_idx, test_idx = train_test_split(np.arange(len(dataset)), test_size=test_size, random_state=random_state)
 
-    train_dataset = _extract_dataset_by_idx(dataset, train_idx)
-    test_dataset = _extract_dataset_by_idx(dataset, test_idx)
+    train_dataset = dataset.extract_by_idx(train_idx)
+    test_dataset = dataset.extract_by_idx(test_idx)
     return train_dataset, test_dataset
 
 
 def load_expanded_dataset_train_val(
         pwd: Path, test_size: float = 0.2, random_state: int = 42
-) -> tuple[tuple[np.ndarray, dict, dict, dict], tuple[np.ndarray, dict, dict, dict]]:
+) -> tuple[ExpandedDataset, ExpandedDataset]:
     dataset, _ = load_expanded_dataset_train_test(pwd, test_size, random_state)
-    train_idx, val_idx = train_test_split(np.arange(len(dataset[0])), test_size=test_size,
-                                          random_state=random_state)
+    train_idx, val_idx = train_test_split(np.arange(len(dataset)), test_size=test_size, random_state=random_state)
 
-    train_dataset = _extract_dataset_by_idx(dataset, train_idx)
-    val_dataset = _extract_dataset_by_idx(dataset, val_idx)
+    train_dataset = dataset.extract_by_idx(train_idx)
+    val_dataset = dataset.extract_by_idx(val_idx)
     return train_dataset, val_dataset

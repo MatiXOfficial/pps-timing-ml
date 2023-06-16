@@ -4,11 +4,11 @@ from pathlib import Path
 
 from matplotlib import pyplot as plt
 
+from src.dataset import PlaneChannel
+
 PLANES = [1, 2, 3]
 PLANE_0 = 1
 N_PLANES = 3
-
-PlaneChannel = tuple[int, int]
 
 
 def save_plt(path: Path | str, **kwargs) -> None:

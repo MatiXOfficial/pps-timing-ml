@@ -59,7 +59,7 @@ def train_model(model: tf.keras.Model, name: str, path_component: str, X_train: 
 
 
 def plot_history(history: dict[str, np.array], title: str | None = None, ymax: float | None = None,
-                 figsize: tuple[float, float] = (8, 6)) -> None:
+                 figsize: tuple[float, float] = (8, 6), show: bool = True) -> None:
     plt.figure(figsize=figsize)
 
     X = np.arange(1, len(history['loss']) + 1)
@@ -78,7 +78,8 @@ def plot_history(history: dict[str, np.array], title: str | None = None, ymax: f
 
     if title is not None:
         plt.suptitle(title)
-    plt.show()
+    if show:
+        plt.show()
 
 
 def plot_difference_hist(y_true, y_pred, plane=None, channel=None, hist_range=(-0.5, 0.5), n_bins=100, show=True,

@@ -36,6 +36,20 @@ def deconvolve_precision(p: int, prec_dict: dict[PlaneChannel, float]) -> float:
     return math.sqrt(pos_pair_1 ** 2 + pos_pair_2 ** 2 - neg_pair ** 2)
 
 
+def deconvolve_precisions(prec_dict: dict[tuple[PlaneChannel, PlaneChannel], float]) -> dict[PlaneChannel, float]:
+    channel_mutual_precisions: dict[int, dict[tuple[int, int], float]] = defaultdict(dict)
+    for ((x_p, x_ch), (y_p, y_ch)), precision in prec_dict.items():
+        assert x_ch == y_ch
+        channel_mutual_precisions[x_ch][(x_p, y_p)] = precision
+
+    deconvolved_precisions = {}
+    for ch, prec_dict in channel_mutual_precisions.items():
+        for p in PLANES:
+            deconvolved_precisions[(p, ch)] = deconvolve_precision(p, prec_dict)
+
+    return deconvolved_precisions
+
+
 def print_pairwise_precisions(precisions: dict[tuple[PlaneChannel, PlaneChannel], float]) -> None:
     channel_mutual_precisions: dict[int, dict[PlaneChannel, float]] = defaultdict(dict)
     for ((x_p, x_ch), (y_p, y_ch)), precision in precisions.items():

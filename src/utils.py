@@ -33,7 +33,7 @@ def deconvolve_precision(p: int, prec_dict: dict[PlaneChannel, float]) -> float:
     pos_pair_2 = prec_dict[_sorted_pair(p, p2)]
     neg_pair = prec_dict[_sorted_pair(p1, p2)]
 
-    return math.sqrt(pos_pair_1 ** 2 + pos_pair_2 ** 2 - neg_pair ** 2)
+    return math.sqrt((pos_pair_1 ** 2 + pos_pair_2 ** 2 - neg_pair ** 2) / 2)
 
 
 def deconvolve_precisions(prec_dict: dict[tuple[PlaneChannel, PlaneChannel], float]) -> dict[PlaneChannel, float]:

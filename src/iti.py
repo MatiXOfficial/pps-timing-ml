@@ -1,6 +1,7 @@
 import copy
 from itertools import combinations
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -10,19 +11,19 @@ from tensorflow.python.framework.errors_impl import NotFoundError
 
 from src.dataset import ExpandedDataset, X_TIME, TIME_STEP, PlaneChannel
 from src.gauss_hist import get_gauss_stats, plot_gauss_hist
-from src.models import optimal_model_builder_iti as model_builder
+from src.models import optimal_model_builder_iti as model_builder_default
 from src.network_utils import gaussian_kernel, plot_difference_hist
 from src.network_utils import train_model as _base_train_model
 from src.utils import save_plt
 
 
 def build_and_train_network(
-        iteration: int, x_train: np.ndarray, x_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray, overwrite: bool,
-        pwd: str, dir_name: str, lr: float, n_epochs: int, batch_size: int, lr_patience: int, es_patience: int,
-        es_min_delta: float, loss_weight: int, verbose: int = 2
+        iteration: int | None, x_train: np.ndarray, x_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray,
+        overwrite: bool, pwd: str, dir_name: str, lr: float, n_epochs: int, batch_size: int, lr_patience: int,
+        es_patience: int, es_min_delta: float, loss_weight: int, verbose: int = 2, model_builder: Callable | None = None
 ) -> tuple[keras.Model, pd.DataFrame]:
-    model = model_builder()
-    name = f"optimal_it_{iteration}"
+    model = model_builder_default() if model_builder is None else model_builder()
+    name = f"optimal_it_{iteration}" if iteration is not None else "optimal"
     if overwrite:
         history = _base_train_model(model, name, dir_name, x_train, y_train, x_val, y_val, lr, True, n_epochs,
                                     verbose, batch_size, lr_patience, es_patience, es_min_delta, loss_weight,
@@ -40,11 +41,14 @@ def build_and_train_network(
     return model, history
 
 
-def build_nn_dataset(dataset: ExpandedDataset) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def build_nn_dataset(dataset: ExpandedDataset, use_t_avg: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     x, y = [], []
     for key in dataset.keys():
         x.extend(dataset.wav[key][dataset.notnan_mask[key]])
-        y.extend(dataset.t_ref[key][dataset.notnan_mask[key]])
+        if not use_t_avg:
+            y.extend(dataset.t_ref[key][dataset.notnan_mask[key]])
+        else:
+            y.extend(dataset.t_avg[dataset.notnan_mask[key]] - dataset.t0[key][dataset.notnan_mask[key]])
 
     x, y = np.array(x), np.array(y)
 
@@ -121,7 +125,7 @@ def build_updated_dataset(
 
 
 def compute_pairwise_precisions(
-        dataset: ExpandedDataset, hists_path: str | Path | None = None
+        dataset: ExpandedDataset, hists_path: str | Path | None = None, show: bool = False
 ) -> tuple[dict[tuple[PlaneChannel, PlaneChannel], float], dict[tuple[PlaneChannel, PlaneChannel], float]]:
     dataset_global_t = copy.deepcopy(dataset.t0)
     for key in dataset.t_pred.keys():
@@ -144,6 +148,8 @@ def compute_pairwise_precisions(
     plt.title("Difference histograms for validation purposes")
     if hists_path is not None:
         save_plt(hists_path)
+    if show:
+        plt.show()
 
     plt.close()
 

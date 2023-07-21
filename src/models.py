@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 
 
 class SignalNormalization(keras.layers.Layer):
-    def __init__(self, n_baseline=8):
+    def __init__(self, n_baseline=6):
         super().__init__()
         self.n_baseline = n_baseline
 

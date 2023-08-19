@@ -63,7 +63,7 @@ def print_pairwise_precisions(precisions: dict[tuple[PlaneChannel, PlaneChannel]
             print(f'ch {ch:2}: (p{p_1} vs p{p_2}): {prec:0.2f} ps')
 
 
-def scatter_random(data, classes, class_limit=None, size=1, seed=42):
+def scatter_random(data, classes, class_limit=None, size=1, seed=42, show_axes=False):
     if isinstance(data, list):
         data = np.array(data)
     if isinstance(classes, list):

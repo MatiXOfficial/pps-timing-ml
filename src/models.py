@@ -199,10 +199,10 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
                             hp_batch_normalization=True, hp_input_batch_normalization=True, hp_dropout=0.2,
                             hp_normalize_signal=False),
 
-    convnet=lambda: convnet_builder(hp_n_conv_blocks=4, hp_n_conv_layers=1, hp_filters_mult=4,
-                                    hp_conv_spatial_dropout=0.2, hp_mlp_n_hidden_layers=1, hp_batch_normalization=True,
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=2, hp_n_conv_layers=2, hp_filters_mult=2,
+                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=2, hp_batch_normalization=True,
                                     hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=16,
-                                    hp_mlp_dropout=0.5),
+                                    hp_mlp_dropout=0.2),
 
     unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=1, hp_filters_mult=8, hp_spatial_dropout=0.2,
                               hp_batch_normalization=True, hp_input_batch_normalization=True,
@@ -223,16 +223,16 @@ optimal_model_builders_all_ch = OptimalModelBuilders(
                             hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0,
                             hp_normalize_signal=False),
 
-    convnet=lambda: convnet_builder(hp_n_conv_blocks=4, hp_n_conv_layers=1, hp_filters_mult=2,
-                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=1, hp_batch_normalization=False,
-                                    hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=8,
-                                    hp_mlp_dropout=0.0),
+    convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=4,
+                                    hp_conv_spatial_dropout=0.0, hp_mlp_n_hidden_layers=2, hp_batch_normalization=True,
+                                    hp_input_batch_normalization=True, hp_normalize_signal=False, hp_mlp_units_mult=16,
+                                    hp_mlp_dropout=0.2),
 
     unet=lambda: unet_builder(hp_unet_depth=3, hp_n_conv_layers=3, hp_filters_mult=8, hp_spatial_dropout=0.2,
                               hp_batch_normalization=True, hp_input_batch_normalization=True,
                               hp_normalize_signal=False),
 
-    rnn=lambda: rnn_builder(hp_rnn_type='lstm', hp_n_neurons=64, hp_n_hidden_layers=1,
+    rnn=lambda: rnn_builder(hp_rnn_type='lstm', hp_n_neurons=16, hp_n_hidden_layers=1,
                             hp_input_batch_normalization=True, hp_normalize_signal=False)
 )
 

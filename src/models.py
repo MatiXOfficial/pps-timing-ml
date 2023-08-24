@@ -32,7 +32,7 @@ def mlp_builder(hp_n_hidden_layers: int, hp_units_mult: int, hp_unit_decrease_fa
     for _ in range(hp_n_hidden_layers - 1):
         n_units_list.append(int(n_units_list[-1] * hp_unit_decrease_factor))
 
-    for n_units in n_units_list:
+    for n_units in reversed(n_units_list):
         model.add(layers.Dense(n_units, activation='relu'))
         if hp_batch_normalization:
             model.add(layers.BatchNormalization())
@@ -89,7 +89,7 @@ def convnet_builder(hp_n_conv_blocks: int, hp_n_conv_layers: int, hp_filters_mul
     return model
 
 
-def _conv_block(x, n_filters, kernel_size: int = 2, n_conv_layers: int = 1, batch_normalization: bool = False,
+def _conv_block(x, n_filters, kernel_size: int = 3, n_conv_layers: int = 1, batch_normalization: bool = False,
                 spatial_dropout: float = 0):
     for _ in range(n_conv_layers):
         x = layers.Conv1D(n_filters, kernel_size, activation='relu', padding='same')(x)
@@ -195,8 +195,8 @@ class OptimalModelBuilders:
 
 
 optimal_model_builders_ch_2_11 = OptimalModelBuilders(
-    mlp=lambda: mlp_builder(hp_n_hidden_layers=7, hp_units_mult=32, hp_unit_decrease_factor=1.0,
-                            hp_batch_normalization=True, hp_input_batch_normalization=True, hp_dropout=0.2,
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=1, hp_units_mult=32, hp_unit_decrease_factor=1.5,
+                            hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.5,
                             hp_normalize_signal=False),
 
     convnet=lambda: convnet_builder(hp_n_conv_blocks=2, hp_n_conv_layers=2, hp_filters_mult=2,
@@ -219,8 +219,8 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
 optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.unet
 
 optimal_model_builders_all_ch = OptimalModelBuilders(
-    mlp=lambda: mlp_builder(hp_n_hidden_layers=3, hp_units_mult=32, hp_unit_decrease_factor=2.0,
-                            hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0,
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=7, hp_units_mult=8, hp_unit_decrease_factor=2.0,
+                            hp_batch_normalization=True, hp_input_batch_normalization=True, hp_dropout=0.2,
                             hp_normalize_signal=False),
 
     convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=4,

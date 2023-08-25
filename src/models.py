@@ -219,8 +219,8 @@ optimal_model_builders_ch_2_11 = OptimalModelBuilders(
 optimal_model_builder_ch_2_11 = optimal_model_builders_ch_2_11.unet
 
 optimal_model_builders_all_ch = OptimalModelBuilders(
-    mlp=lambda: mlp_builder(hp_n_hidden_layers=7, hp_units_mult=8, hp_unit_decrease_factor=2.0,
-                            hp_batch_normalization=True, hp_input_batch_normalization=True, hp_dropout=0.2,
+    mlp=lambda: mlp_builder(hp_n_hidden_layers=4, hp_units_mult=32, hp_unit_decrease_factor=1.0,
+                            hp_batch_normalization=False, hp_input_batch_normalization=True, hp_dropout=0.0,
                             hp_normalize_signal=False),
 
     convnet=lambda: convnet_builder(hp_n_conv_blocks=1, hp_n_conv_layers=1, hp_filters_mult=4,
